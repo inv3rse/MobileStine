@@ -1,16 +1,25 @@
 package com.inv3rs3.mobilestine.ui;
 
+import android.app.AlertDialog;
 import android.app.Fragment;
+import android.content.DialogInterface;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.ActionBarActivity;
 import android.support.v7.widget.Toolbar;
+import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.inv3rs3.mobilestine.R;
+import com.inv3rs3.mobilestine.application.BusProvider;
+import com.inv3rs3.mobilestine.events.RequestLoginEvent;
+import com.inv3rs3.mobilestine.events.SetLoginEvent;
+import com.squareup.otto.Bus;
+import com.squareup.otto.Subscribe;
 
 
 public class MainActivity extends ActionBarActivity
@@ -23,6 +32,7 @@ public class MainActivity extends ActionBarActivity
     private NavigationDrawerFragment _navigationDrawerFragment;
     private Toolbar _toolbar;
     private int _currentFragment;
+    private Bus _bus;
 
     @Override
     protected void onCreate(Bundle savedInstanceState)
@@ -41,6 +51,8 @@ public class MainActivity extends ActionBarActivity
         // populate the navigation drawer
         _navigationDrawerFragment.setUserData("John Doe", "johndoe@doe.com", BitmapFactory.decodeResource(getResources(), R.drawable.avatar));
 
+        _bus = BusProvider.getInstance();
+        _bus.register(this);
     }
 
     @Override
@@ -113,6 +125,36 @@ public class MainActivity extends ActionBarActivity
         {
             getFragmentManager().beginTransaction().add(R.id.container, fragment).commit();
         }
+    }
+
+    @Subscribe
+    public void onRequestLogin(RequestLoginEvent event)
+    {
+        AlertDialog.Builder builder = new AlertDialog.Builder(this);
+        LayoutInflater inflater = getLayoutInflater();
+
+        builder.setView(inflater.inflate(R.layout.dialog_login, null))
+                .setPositiveButton(R.string.signin, new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface anInterface, int id)
+                    {
+                        AlertDialog dialog = (AlertDialog) anInterface;
+                        String username = ((EditText) dialog.findViewById(R.id.username)).getText().toString();
+                        String password = ((EditText) dialog.findViewById(R.id.password)).getText().toString();
+                        _bus.post(new SetLoginEvent(username, password, true));
+                    }
+                })
+                .setNegativeButton(R.string.cancel, new DialogInterface.OnClickListener()
+                {
+                    @Override
+                    public void onClick(DialogInterface anInterface, int id)
+                    {
+                        System.out.println("negative");
+                    }
+                });
+
+        builder.create().show();
     }
 
 }
