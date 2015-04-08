@@ -17,6 +17,7 @@ import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 
 public class StineService
@@ -24,7 +25,8 @@ public class StineService
     private static final String TARGET_URL = "https://www.stine.uni-hamburg.de/scripts/mgrqispi.dll";
     private static final String COOKIE_URL = "?APPNAME=CampusNet&PRGNAME=EXTERNALPAGES&ARGUMENTS=-N000000000000001,-N000265,-Astartseite";
     private static final String APPOINTMENT_URL = "?APPNAME=CampusNet&PRGNAME=SCHEDULER&ARGUMENTS=<ID>,-N000267,-A,-A,-N,-N000000000000000";
-    private static final String LOGIN_PARAMS = "?APPNAME=CampusNet&PRGNAME=SCHEDULER&ARGUMENTS=<ID>,-N000267,-A,-A,-N,-N000000000000000";
+    private static final String LOGIN_PARAMS = "&APPNAME=CampusNet&PRGNAME=LOGINCHECK&ARGUMENTS=clino%2Cusrname%2Cpass%2Cmenuno%2Cmenu_type%2Cbrowser%2Cplatform&clino=000000000000001&menuno=000265&menu_type=classic&browser=&platform=";
+    private static final String SESSION_START = "ARGUMENTS=";
 
     private static final MediaType MEDIA_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
 
@@ -91,15 +93,15 @@ public class StineService
 
     private void getSession()
     {
-        if (!_hasCookie)
-        {
-            getCookie();
-            return;
-        }
-
         if (_username.isEmpty() || _password.isEmpty())
         {
             _bus.post(new RequestLoginEvent());
+            return;
+        }
+
+        if (!_hasCookie)
+        {
+            getCookie();
             return;
         }
 
@@ -115,13 +117,37 @@ public class StineService
             @Override
             void onSuccess(Response response)
             {
-                System.out.println(response.headers().toString());
+                boolean loginFailed = true;
+                String refreshParam = response.header("REFRESH", "failed");
+                if (!refreshParam.equals("failed"))
+                {
+                    int start = refreshParam.indexOf(SESSION_START);
+                    int end = refreshParam.indexOf(",", start);
+
+                    if (start != -1 && end != -1 && start < end)
+                    {
+                        _session = refreshParam.substring(start + SESSION_START.length(), end);
+                        loginFailed = false;
+                    }
+                }
+
+                if (loginFailed)
+                {
+                    _username = "";
+                    _password = "";
+                    _session = "";
+                    _bus.post(new RequestLoginEvent());
+                }
+                else if (!_pendingDataRequests.isEmpty())
+                {
+                    getWeek(_pendingDataRequests.get(0));
+                }
             }
         });
 
     }
 
-    private void getWeek(String dateParam)
+    private void getWeek(RequestAppointmentsEvent timespan)
     {
 
     }
