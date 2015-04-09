@@ -25,4 +25,14 @@ public class RequestAppointmentsEvent
 
         _endDate = calendar.getTime();
     }
+
+    public Date startDate()
+    {
+        return _startDate;
+    }
+
+    public Date endDate()
+    {
+        return _endDate;
+    }
 }

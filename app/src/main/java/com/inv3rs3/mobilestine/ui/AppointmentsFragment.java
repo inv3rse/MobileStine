@@ -1,17 +1,21 @@
 package com.inv3rs3.mobilestine.ui;
 
 import android.app.Activity;
+import android.content.Context;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.ListView;
 
 import com.inv3rs3.mobilestine.R;
 import com.inv3rs3.mobilestine.application.BusProvider;
+import com.inv3rs3.mobilestine.events.AppointmentsLoadedEvent;
 import com.inv3rs3.mobilestine.events.RequestAppointmentsEvent;
 import com.squareup.otto.Bus;
+import com.squareup.otto.Subscribe;
 
 import java.text.DateFormat;
 import java.text.ParseException;
@@ -30,6 +34,7 @@ public class AppointmentsFragment extends Fragment
     private static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
     private Date _selectedDate;
+    private ListView _listView;
     private Bus _bus;
 
     /**
@@ -52,6 +57,7 @@ public class AppointmentsFragment extends Fragment
     {
         _selectedDate = new Date();
         _bus = BusProvider.getInstance();
+        _bus.register(this);
     }
 
     @Override
@@ -76,7 +82,7 @@ public class AppointmentsFragment extends Fragment
     {
         // Inflate the layout for this fragment
         View createdView = inflater.inflate(R.layout.fragment_appointments, container, false);
-        setUpListeners(createdView);
+        setUpUi(createdView);
         return createdView;
     }
 
@@ -87,13 +93,20 @@ public class AppointmentsFragment extends Fragment
     }
 
     @Override
+    public void onDestroy()
+    {
+        _bus.unregister(this);
+    }
+
+    @Override
     public void onDetach()
     {
         super.onDetach();
     }
 
-    private void setUpListeners(View searchView)
+    private void setUpUi(View searchView)
     {
+        _listView = (ListView) searchView.findViewById(R.id.appointments_list);
         Button refreshBtn = (Button) searchView.findViewById(R.id.appointments_refreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener()
         {
@@ -103,5 +116,12 @@ public class AppointmentsFragment extends Fragment
                 _bus.post(new RequestAppointmentsEvent(1));
             }
         });
+    }
+
+    @Subscribe
+    public void onAppointmentsLoaded(AppointmentsLoadedEvent event)
+    {
+        AppointmentAdapter adapter = new AppointmentAdapter(getActivity(), event.appointments());
+        _listView.setAdapter(adapter);
     }
 }

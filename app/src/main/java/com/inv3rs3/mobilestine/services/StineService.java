@@ -1,5 +1,7 @@
 package com.inv3rs3.mobilestine.services;
 
+import com.inv3rs3.mobilestine.data.Appointment;
+import com.inv3rs3.mobilestine.events.AppointmentsLoadedEvent;
 import com.inv3rs3.mobilestine.events.NetworkFailureEvent;
 import com.inv3rs3.mobilestine.events.RequestAppointmentsEvent;
 import com.inv3rs3.mobilestine.events.RequestLoginEvent;
@@ -10,25 +12,38 @@ import com.squareup.okhttp.OkHttpClient;
 import com.squareup.okhttp.Request;
 import com.squareup.okhttp.RequestBody;
 import com.squareup.okhttp.Response;
+import com.squareup.okhttp.ResponseBody;
 import com.squareup.otto.Bus;
 import com.squareup.otto.Subscribe;
 
 import java.io.IOException;
 import java.net.CookieManager;
 import java.net.CookiePolicy;
+import java.text.DateFormat;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
+import java.util.Locale;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class StineService
 {
     private static final String TARGET_URL = "https://www.stine.uni-hamburg.de/scripts/mgrqispi.dll";
     private static final String COOKIE_URL = "?APPNAME=CampusNet&PRGNAME=EXTERNALPAGES&ARGUMENTS=-N000000000000001,-N000265,-Astartseite";
-    private static final String APPOINTMENT_URL = "?APPNAME=CampusNet&PRGNAME=SCHEDULER&ARGUMENTS=<ID>,-N000267,-A,-A,-N,-N000000000000000";
+    private static final String DATA_URL = "?APPNAME=CampusNet&PRGNAME=SCHEDULERPRINT&ARGUMENTS=<SESSION>,-N000363,-A<DATE>,-A,-N1";
     private static final String LOGIN_PARAMS = "&APPNAME=CampusNet&PRGNAME=LOGINCHECK&ARGUMENTS=clino%2Cusrname%2Cpass%2Cmenuno%2Cmenu_type%2Cbrowser%2Cplatform&clino=000000000000001&menuno=000265&menu_type=classic&browser=&platform=";
     private static final String SESSION_START = "ARGUMENTS=";
 
+    private static final String DATA_EXPRESSION = "(<td width=\"590\" class=\"tbhead\" colspan=\"100%\" style=\"font-size:13px;\">(.*))</td>|(<td width=\".*\" class=\"tbdata\">(.*)</td>)";
+    private static final Pattern DATA_PATTERN = Pattern.compile(DATA_EXPRESSION);
+
     private static final MediaType MEDIA_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
+    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+    private static final DateFormat HOUR_FORMAT = new SimpleDateFormat("HH:mm", Locale.GERMAN);
+    private static final DateFormat STINE_DAY_FORMAT = new SimpleDateFormat("EEE dd. MMM. yyyy", Locale.GERMAN);
 
     private Bus _bus;
     private OkHttpClient _client;
@@ -38,7 +53,7 @@ public class StineService
 
     private String _username;
     private String _password;
-    private String _session;
+    private String _session; // example "-N768028896237999" or empty if non existent
 
     public StineService(Bus bus)
     {
@@ -149,6 +164,111 @@ public class StineService
 
     private void getWeek(RequestAppointmentsEvent timespan)
     {
+        if (_session.isEmpty())
+        {
+            getCookie();
+            return;
+        }
+
+        String dateSelection =DATE_FORMAT.format(timespan.startDate());
+        String dataUrl = DATA_URL.replace("<SESSION>", _session);
+        dataUrl = dataUrl.replace("<DATE>", dateSelection);
+        Request dataRequest = new Request.Builder()
+                .url(TARGET_URL + dataUrl)
+                .build();
+
+        _client.newCall(dataRequest).enqueue(new CustomCallback()
+        {
+            @Override
+            void onSuccess(Response response)
+            {
+                System.out.println("DATA RESPONSE:");
+                extractAppointments(response.body());
+                _pendingDataRequests.remove(0);
+            }
+        });
+    }
+
+    private void extractAppointments(ResponseBody htmlBody)
+    {
+        String body;
+        try
+        {
+            body = htmlBody.string();
+        } catch (IOException e)
+        {
+            System.out.println("can not read response body");
+            return;
+        }
+
+        ArrayList<Appointment> appointments = new ArrayList<>();
+        Date day = new Date();
+
+        String desc = "";
+        String location = "";
+        Date startTime = new Date();
+        Date endTime = new Date();
+
+        int paramcount = 0;
+
+        Matcher match = DATA_PATTERN.matcher(body);
+        while (match.find())
+        {
+            String dayString = match.group(2);
+            String otherString = match.group(4);
+
+            if (dayString != null)
+            {
+                try
+                {
+                    day = STINE_DAY_FORMAT.parse(dayString);
+                    System.out.println("date parsed: " + dayString);
+                } catch (ParseException e)
+                {
+                    System.out.println("can not parse date: " + dayString);
+                }
+            }
+            if (otherString != null)
+            {
+                switch (paramcount)
+                {
+                    case 0: // Name
+                        desc = otherString.replace("</a>", "");
+                        System.out.println("descr: " + desc);
+                        break;
+                    case 1: // Prof
+                        break;
+                    case 2: // startTime - endTime
+                        String[] times =otherString.split(" - ");
+                        if (times.length == 2)
+                        {
+                            try
+                            {
+                                startTime = HOUR_FORMAT.parse(times[0]);
+                            } catch (ParseException e)
+                            {
+                                System.out.println("can not parse hour: " + times[0]);
+                            }
+                            try
+                            {
+                                endTime = HOUR_FORMAT.parse(times[1]);
+                            } catch (ParseException e)
+                            {
+                                System.out.println("can not parse hour: " + times[1]);
+                            }
+                        }
+                        break;
+                    case 3: // location
+                        location = otherString;
+                        System.out.println("location: " + location);
+                        appointments.add(new Appointment(startTime, endTime, location, desc));
+
+                }
+                paramcount = (paramcount + 1) % 4;
+            }
+        }
+
+        _bus.post(new AppointmentsLoadedEvent(appointments));
 
     }
 

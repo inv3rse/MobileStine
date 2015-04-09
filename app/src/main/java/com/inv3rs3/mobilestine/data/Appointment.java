@@ -17,5 +17,24 @@ public class Appointment
         _description = description;
     }
 
+    public String description()
+    {
+        return _description;
+    }
+
+    public String location()
+    {
+        return _location;
+    }
+
+    public Date startDate()
+    {
+        return _start;
+    }
+
+    public Date endDate()
+    {
+        return _end;
+    }
 
 }
