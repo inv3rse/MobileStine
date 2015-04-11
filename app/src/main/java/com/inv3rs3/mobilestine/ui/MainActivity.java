@@ -58,15 +58,13 @@ public class MainActivity extends ActionBarActivity
     @Override
     protected void onDestroy()
     {
+        super.onDestroy();
         _bus.unregister(this);
     }
 
     @Override
     public void onNavigationDrawerItemSelected(int position)
     {
-        // update the main content by replacing fragments
-        Toast.makeText(this, "Menu item selected -> " + position, Toast.LENGTH_SHORT).show();
-
         if (_currentFragment != position && position >= 0 && position < 1)
         {
             if (position == 0)
@@ -123,14 +121,8 @@ public class MainActivity extends ActionBarActivity
 
     private void setFragment(Fragment fragment, boolean replace)
     {
-        if (replace)
-        {
-            getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
-        }
-        else
-        {
-            getFragmentManager().beginTransaction().add(R.id.container, fragment).commit();
-        }
+        // TODO overall fragment handling...
+        getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
     }
 
     @Subscribe

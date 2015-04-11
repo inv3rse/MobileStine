@@ -23,7 +23,9 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Calendar;
 import java.util.Date;
+import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 import java.util.regex.Matcher;
@@ -41,9 +43,10 @@ public class StineService
     private static final Pattern DATA_PATTERN = Pattern.compile(DATA_EXPRESSION);
 
     private static final MediaType MEDIA_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
-    private static final DateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
-    private static final DateFormat HOUR_FORMAT = new SimpleDateFormat("HH:mm", Locale.GERMAN);
-    private static final DateFormat STINE_DAY_FORMAT = new SimpleDateFormat("EEE dd. MMM. yyyy", Locale.GERMAN);
+
+    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+    public static final SimpleDateFormat HOUR_FORMAT = new SimpleDateFormat("HH:mm", Locale.GERMAN);
+    public static final SimpleDateFormat STINE_DAY_FORMAT = new SimpleDateFormat("EEE, d. LLL. yyyy", Locale.GERMAN);
 
     private Bus _bus;
     private OkHttpClient _client;
@@ -202,12 +205,13 @@ public class StineService
         }
 
         ArrayList<Appointment> appointments = new ArrayList<>();
-        Date day = new Date();
+        // hold the current date (does not include hour)
+        GregorianCalendar calendar = new GregorianCalendar();
 
         String desc = "";
         String location = "";
-        Date startTime = new Date();
-        Date endTime = new Date();
+        GregorianCalendar startTime= new GregorianCalendar();
+        GregorianCalendar endTime = new GregorianCalendar();
 
         int paramcount = 0;
 
@@ -221,7 +225,8 @@ public class StineService
             {
                 try
                 {
-                    day = STINE_DAY_FORMAT.parse(dayString);
+                    Date date = STINE_DAY_FORMAT.parse(dayString);
+                    calendar.setTime(date);
                     System.out.println("date parsed: " + dayString);
                 } catch (ParseException e)
                 {
@@ -244,14 +249,22 @@ public class StineService
                         {
                             try
                             {
-                                startTime = HOUR_FORMAT.parse(times[0]);
+                                Date start = HOUR_FORMAT.parse(times[0]);
+                                startTime.setTime(start);
+                                startTime.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH));
+                                startTime.set(Calendar.MONTH, calendar.get(Calendar.MONTH));
+                                startTime.set(Calendar.YEAR, calendar.get(Calendar.YEAR));
                             } catch (ParseException e)
                             {
                                 System.out.println("can not parse hour: " + times[0]);
                             }
                             try
                             {
-                                endTime = HOUR_FORMAT.parse(times[1]);
+                                Date end = HOUR_FORMAT.parse(times[1]);
+                                endTime.setTime(end);
+                                endTime.set(Calendar.DAY_OF_MONTH, calendar.get(Calendar.DAY_OF_MONTH));
+                                endTime.set(Calendar.MONTH, calendar.get(Calendar.MONTH));
+                                endTime.set(Calendar.YEAR, calendar.get(Calendar.YEAR));
                             } catch (ParseException e)
                             {
                                 System.out.println("can not parse hour: " + times[1]);
@@ -261,7 +274,7 @@ public class StineService
                     case 3: // location
                         location = otherString;
                         System.out.println("location: " + location);
-                        appointments.add(new Appointment(startTime, endTime, location, desc));
+                        appointments.add(new Appointment(startTime.getTime(), endTime.getTime(), location, desc));
 
                 }
                 paramcount = (paramcount + 1) % 4;
@@ -290,6 +303,7 @@ public class StineService
                 return;
             }
 
+            // TODO handle session timeout
             System.out.println(response.toString());
             onSuccess(response);
         }

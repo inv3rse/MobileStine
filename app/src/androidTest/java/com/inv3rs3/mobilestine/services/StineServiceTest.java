@@ -1,20 +1,31 @@
 package com.inv3rs3.mobilestine.services;
 
-import com.squareup.otto.Bus;
-
 import junit.framework.TestCase;
 
-/**
- * Created by dennis on 08.04.15.
- */
+import java.text.ParseException;
+
+
 public class StineServiceTest extends TestCase
 {
-    private Bus _bus;
-    private StineService _stineService;
-
     @Override
     protected void setUp()
     {
-        _bus = new Bus();
+    }
+
+    public void testTimeParse()
+    {
+        String dayString = "Fr, 10. Apr. 2015";
+        boolean parsed = false;
+
+        try
+        {
+            StineService.STINE_DAY_FORMAT.parse(dayString);
+            parsed = true;
+        } catch (ParseException e)
+        {
+            parsed = false;
+        }
+
+        assertTrue(parsed);
     }
 }

@@ -95,6 +95,7 @@ public class AppointmentsFragment extends Fragment
     @Override
     public void onDestroy()
     {
+        super.onDestroy();
         _bus.unregister(this);
     }
 
