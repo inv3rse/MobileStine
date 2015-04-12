@@ -26,6 +26,17 @@ public class RequestAppointmentsEvent
         _endDate = calendar.getTime();
     }
 
+    public RequestAppointmentsEvent(Date startDate, int days)
+    {
+        _startDate = startDate;
+
+        GregorianCalendar calendar = new GregorianCalendar();
+        calendar.setTime(_startDate);
+        calendar.add(Calendar.DAY_OF_MONTH, days);
+
+        _endDate = calendar.getTime();
+    }
+
     public Date startDate()
     {
         return _startDate;

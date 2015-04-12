@@ -1,13 +1,17 @@
 package com.inv3rs3.mobilestine.ui;
 
 import android.app.Activity;
-import android.content.Context;
+import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.view.LayoutInflater;
+import android.view.Menu;
+import android.view.MenuInflater;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.Button;
+import android.widget.DatePicker;
 import android.widget.ListView;
 
 import com.inv3rs3.mobilestine.R;
@@ -20,6 +24,7 @@ import com.squareup.otto.Subscribe;
 import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
+import java.util.Calendar;
 import java.util.Date;
 
 /**
@@ -33,7 +38,7 @@ public class AppointmentsFragment extends Fragment
     private static final String ARG_SELECTED_DATE = "selected date";
     private static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
 
-    private Date _selectedDate;
+    private Calendar _selectedDate;
     private ListView _listView;
     private Bus _bus;
 
@@ -55,7 +60,7 @@ public class AppointmentsFragment extends Fragment
 
     public AppointmentsFragment()
     {
-        _selectedDate = new Date();
+        _selectedDate = Calendar.getInstance();
         _bus = BusProvider.getInstance();
         _bus.register(this);
     }
@@ -64,14 +69,15 @@ public class AppointmentsFragment extends Fragment
     public void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
+        setHasOptionsMenu(true);
         if (getArguments() != null)
         {
             try
             {
-                _selectedDate = dateFormat.parse(getArguments().getString(ARG_SELECTED_DATE));
+                _selectedDate.setTime(dateFormat.parse(getArguments().getString(ARG_SELECTED_DATE)));
             } catch (ParseException e)
             {
-                _selectedDate = new Date();
+                _selectedDate = Calendar.getInstance();
             }
         }
     }
@@ -114,9 +120,44 @@ public class AppointmentsFragment extends Fragment
             @Override
             public void onClick(View view)
             {
-                _bus.post(new RequestAppointmentsEvent(1));
+                _bus.post(new RequestAppointmentsEvent(_selectedDate.getTime(), 7));
             }
         });
+    }
+
+    @Override
+    public void onCreateOptionsMenu(Menu menu, MenuInflater inflater)
+    {
+        inflater.inflate(R.menu.appointments, menu);
+    }
+
+    public boolean onOptionsItemSelected(MenuItem item)
+    {
+        int id = item.getItemId();
+
+        if (id == R.id.action_select_date)
+        {
+            DatePickerDialog dialog = new DatePickerDialog(getActivity(), new DatePickerDialog.OnDateSetListener()
+                {
+                    @Override
+                    public void onDateSet(DatePicker picker, int year, int month, int day)
+                    {
+                        _selectedDate.set(Calendar.YEAR, year);
+                        _selectedDate.set(Calendar.MONTH, month);
+                        _selectedDate.set(Calendar.DAY_OF_MONTH, day);
+
+                        _bus.post(new RequestAppointmentsEvent(_selectedDate.getTime(), 7));
+                    }
+                },
+                _selectedDate.get(Calendar.YEAR),
+                _selectedDate.get(Calendar.MONTH),
+                _selectedDate.get(Calendar.DAY_OF_MONTH));
+
+            dialog.show();
+            return true;
+        }
+
+        return super.onOptionsItemSelected(item);
     }
 
     @Subscribe

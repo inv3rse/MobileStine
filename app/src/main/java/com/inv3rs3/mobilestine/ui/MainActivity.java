@@ -12,7 +12,6 @@ import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.EditText;
-import android.widget.Toast;
 
 import com.inv3rs3.mobilestine.R;
 import com.inv3rs3.mobilestine.application.BusProvider;
@@ -148,7 +147,7 @@ public class MainActivity extends ActionBarActivity
                     @Override
                     public void onClick(DialogInterface anInterface, int id)
                     {
-                        System.out.println("negative");
+                        anInterface.cancel();
                     }
                 });
 
