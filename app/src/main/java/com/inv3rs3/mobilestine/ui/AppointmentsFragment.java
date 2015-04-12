@@ -26,6 +26,7 @@ import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
 import java.util.Date;
+import java.util.Locale;
 
 /**
  * A simple {@link Fragment} subclass.
@@ -36,7 +37,7 @@ public class AppointmentsFragment extends Fragment
 {
 
     private static final String ARG_SELECTED_DATE = "selected date";
-    private static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy");
+    private static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
 
     private Calendar _selectedDate;
     private ListView _listView;
@@ -70,15 +71,17 @@ public class AppointmentsFragment extends Fragment
     {
         super.onCreate(savedInstanceState);
         setHasOptionsMenu(true);
-        if (getArguments() != null)
+        if (savedInstanceState != null)
         {
             try
             {
-                _selectedDate.setTime(dateFormat.parse(getArguments().getString(ARG_SELECTED_DATE)));
-            } catch (ParseException e)
+                _selectedDate.setTime(dateFormat.parse(savedInstanceState.getString(ARG_SELECTED_DATE)));
+            } catch (ParseException ignored)
             {
-                _selectedDate = Calendar.getInstance();
             }
+        } else
+        {
+            System.out.println("no saved instance");
         }
     }
 
@@ -90,6 +93,13 @@ public class AppointmentsFragment extends Fragment
         View createdView = inflater.inflate(R.layout.fragment_appointments, container, false);
         setUpUi(createdView);
         return createdView;
+    }
+
+    @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        outState.putString(ARG_SELECTED_DATE, dateFormat.format(_selectedDate.getTime()));
     }
 
     @Override
@@ -138,20 +148,20 @@ public class AppointmentsFragment extends Fragment
         if (id == R.id.action_select_date)
         {
             DatePickerDialog dialog = new DatePickerDialog(getActivity(), new DatePickerDialog.OnDateSetListener()
+            {
+                @Override
+                public void onDateSet(DatePicker picker, int year, int month, int day)
                 {
-                    @Override
-                    public void onDateSet(DatePicker picker, int year, int month, int day)
-                    {
-                        _selectedDate.set(Calendar.YEAR, year);
-                        _selectedDate.set(Calendar.MONTH, month);
-                        _selectedDate.set(Calendar.DAY_OF_MONTH, day);
+                    _selectedDate.set(Calendar.YEAR, year);
+                    _selectedDate.set(Calendar.MONTH, month);
+                    _selectedDate.set(Calendar.DAY_OF_MONTH, day);
 
-                        _bus.post(new RequestAppointmentsEvent(_selectedDate.getTime(), 7));
-                    }
-                },
-                _selectedDate.get(Calendar.YEAR),
-                _selectedDate.get(Calendar.MONTH),
-                _selectedDate.get(Calendar.DAY_OF_MONTH));
+                    _bus.post(new RequestAppointmentsEvent(_selectedDate.getTime(), 7));
+                }
+            },
+                    _selectedDate.get(Calendar.YEAR),
+                    _selectedDate.get(Calendar.MONTH),
+                    _selectedDate.get(Calendar.DAY_OF_MONTH));
 
             dialog.show();
             return true;

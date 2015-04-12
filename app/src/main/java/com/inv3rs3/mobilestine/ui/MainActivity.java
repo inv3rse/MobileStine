@@ -2,6 +2,7 @@ package com.inv3rs3.mobilestine.ui;
 
 import android.app.AlertDialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
@@ -24,10 +25,8 @@ import com.squareup.otto.Subscribe;
 public class MainActivity extends ActionBarActivity
         implements NavigationDrawerCallbacks
 {
+    private static String ARG_SELECTED_FRAGMENT = "SELECTED_FRAGMENT";
 
-    /**
-     * Fragment managing the behaviors, interactions and presentation of the navigation drawer.
-     */
     private NavigationDrawerFragment _navigationDrawerFragment;
     private Toolbar _toolbar;
     private int _currentFragment;
@@ -37,13 +36,21 @@ public class MainActivity extends ActionBarActivity
     protected void onCreate(Bundle savedInstanceState)
     {
         super.onCreate(savedInstanceState);
-        _currentFragment = -1;
         setContentView(R.layout.activity_main);
         _toolbar = (Toolbar) findViewById(R.id.toolbar_actionbar);
         setSupportActionBar(_toolbar);
 
         _navigationDrawerFragment = (NavigationDrawerFragment)
                 getFragmentManager().findFragmentById(R.id.fragment_drawer);
+
+        if (savedInstanceState != null)
+        {
+            _currentFragment = savedInstanceState.getInt(ARG_SELECTED_FRAGMENT);
+        }
+        else
+        {
+            setFragment(0);
+        }
 
         // Set up the drawer.
         _navigationDrawerFragment.setup(R.id.fragment_drawer, (DrawerLayout) findViewById(R.id.drawer), _toolbar);
@@ -62,19 +69,20 @@ public class MainActivity extends ActionBarActivity
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState)
+    {
+        super.onSaveInstanceState(outState);
+        outState.putInt(ARG_SELECTED_FRAGMENT, _currentFragment);
+    }
+
+    @Override
     public void onNavigationDrawerItemSelected(int position)
     {
         if (_currentFragment != position && position >= 0 && position < 1)
         {
-            if (position == 0)
-            {
-                AppointmentsFragment fragment = new AppointmentsFragment();
-                setFragment(fragment, _currentFragment != -1);
-            }
-            _currentFragment = position;
+            setFragment(position);
         }
     }
-
 
     @Override
     public void onBackPressed()
@@ -84,7 +92,6 @@ public class MainActivity extends ActionBarActivity
         else
             super.onBackPressed();
     }
-
 
     @Override
     public boolean onCreateOptionsMenu(Menu menu)
@@ -99,7 +106,6 @@ public class MainActivity extends ActionBarActivity
         }
         return super.onCreateOptionsMenu(menu);
     }
-
 
     @Override
     public boolean onOptionsItemSelected(MenuItem item)
@@ -118,10 +124,37 @@ public class MainActivity extends ActionBarActivity
         return super.onOptionsItemSelected(item);
     }
 
-    private void setFragment(Fragment fragment, boolean replace)
+    private void setFragment(int fragmentNumber)
     {
-        // TODO overall fragment handling...
-        getFragmentManager().beginTransaction().replace(R.id.container, fragment).commit();
+        int fragmentRes;
+        switch (fragmentNumber)
+        {
+            case 0:
+                fragmentRes = R.id.fragment_appointments;
+                break;
+            default:
+                System.out.println("fragmentNumber does not exist");
+                return;
+        }
+
+        FragmentManager manager = getFragmentManager();
+        Fragment fragment = manager.findFragmentById(fragmentRes);
+
+        if (fragment == null)
+        {
+            System.out.println("fragment new created");
+            switch (fragmentRes)
+            {
+                case R.id.fragment_appointments:
+                    fragment = new AppointmentsFragment();
+                    break;
+                default:
+                    System.out.println("Fragment does not exist");
+                    return;
+            }
+            manager.beginTransaction().replace(R.id.container, fragment).commit();
+        }
+        _currentFragment = fragmentNumber;
     }
 
     @Subscribe
