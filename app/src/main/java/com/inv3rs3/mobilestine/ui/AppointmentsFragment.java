@@ -4,6 +4,7 @@ import android.app.Activity;
 import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.app.Fragment;
+import android.os.Parcelable;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -16,6 +17,7 @@ import android.widget.ListView;
 
 import com.inv3rs3.mobilestine.R;
 import com.inv3rs3.mobilestine.application.BusProvider;
+import com.inv3rs3.mobilestine.data.Appointment;
 import com.inv3rs3.mobilestine.events.AppointmentsLoadedEvent;
 import com.inv3rs3.mobilestine.events.RequestAppointmentsEvent;
 import com.squareup.otto.Bus;
@@ -25,42 +27,24 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
-import java.util.Date;
+import java.util.List;
 import java.util.Locale;
 
-/**
- * A simple {@link Fragment} subclass.
- * Use the {@link AppointmentsFragment#newInstance} factory method to
- * create an instance of this fragment.
- */
 public class AppointmentsFragment extends Fragment
 {
 
     private static final String ARG_SELECTED_DATE = "selected date";
+    private static final String ARG_APPOINTMENTS = "appointments";
     private static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
 
     private Calendar _selectedDate;
     private ListView _listView;
+    private List<Appointment> _appointments;
     private Bus _bus;
-
-    /**
-     * Use this factory method to create a new instance of
-     * this fragment using the provided parameters.
-     *
-     * @param selectedDate Date to show appointments for.
-     * @return A new instance of fragment AppointmentsFragment.
-     */
-    public static AppointmentsFragment newInstance(Date selectedDate)
-    {
-        AppointmentsFragment fragment = new AppointmentsFragment();
-        Bundle args = new Bundle();
-        args.putString(ARG_SELECTED_DATE, dateFormat.format(selectedDate));
-        fragment.setArguments(args);
-        return fragment;
-    }
 
     public AppointmentsFragment()
     {
+        _appointments = null;
         _selectedDate = Calendar.getInstance();
         _bus = BusProvider.getInstance();
         _bus.register(this);
@@ -73,6 +57,7 @@ public class AppointmentsFragment extends Fragment
         setHasOptionsMenu(true);
         if (savedInstanceState != null)
         {
+            _appointments = savedInstanceState.getParcelableArrayList(ARG_APPOINTMENTS);
             try
             {
                 _selectedDate.setTime(dateFormat.parse(savedInstanceState.getString(ARG_SELECTED_DATE)));
@@ -100,6 +85,7 @@ public class AppointmentsFragment extends Fragment
     {
         super.onSaveInstanceState(outState);
         outState.putString(ARG_SELECTED_DATE, dateFormat.format(_selectedDate.getTime()));
+        outState.putParcelableArrayList(ARG_APPOINTMENTS, (java.util.ArrayList<? extends Parcelable>) _appointments);
     }
 
     @Override
@@ -124,6 +110,13 @@ public class AppointmentsFragment extends Fragment
     private void setUpUi(View searchView)
     {
         _listView = (ListView) searchView.findViewById(R.id.appointments_list);
+
+        if (_appointments != null && !_appointments.isEmpty())
+        {
+            AppointmentAdapter adapter = new AppointmentAdapter(getActivity(), _appointments);
+            _listView.setAdapter(adapter);
+        }
+
         Button refreshBtn = (Button) searchView.findViewById(R.id.appointments_refreshBtn);
         refreshBtn.setOnClickListener(new View.OnClickListener()
         {
@@ -173,6 +166,7 @@ public class AppointmentsFragment extends Fragment
     @Subscribe
     public void onAppointmentsLoaded(AppointmentsLoadedEvent event)
     {
+        _appointments = event.appointments();
         AppointmentAdapter adapter = new AppointmentAdapter(getActivity(), event.appointments());
         _listView.setAdapter(adapter);
     }
