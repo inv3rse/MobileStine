@@ -44,9 +44,9 @@ public class StineService
 
     private static final MediaType MEDIA_URLENCODED = MediaType.parse("application/x-www-form-urlencoded");
 
-    public static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
-    public static final SimpleDateFormat HOUR_FORMAT = new SimpleDateFormat("HH:mm", Locale.GERMAN);
-    public static final SimpleDateFormat STINE_DAY_FORMAT = new SimpleDateFormat("EEE, d. LLL. yyyy", Locale.GERMAN);
+    private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
+    private static final SimpleDateFormat HOUR_FORMAT = new SimpleDateFormat("HH:mm", Locale.GERMAN);
+    private static final SimpleDateFormat STINE_DAY_FORMAT = new SimpleDateFormat("EEE, d. LLL. yyyy", Locale.GERMAN);
 
     private Bus _bus;
     private OkHttpClient _client;
@@ -90,6 +90,16 @@ public class StineService
     {
         _pendingDataRequests.add(event);
         getCookie();
+    }
+
+    public static Date parseStineDate(String dateString) throws ParseException
+    {
+        Date date;
+        // "Mai" is not followed by a point which causes parse to fail
+        dateString = dateString.replace("Mai", "Mai.");
+        date = STINE_DAY_FORMAT.parse(dateString);
+
+        return date;
     }
 
     private void getCookie()
@@ -185,9 +195,13 @@ public class StineService
             @Override
             void onSuccess(Response response)
             {
-                System.out.println("DATA RESPONSE:");
                 extractAppointments(response.body());
                 _pendingDataRequests.remove(0);
+
+                if (!_pendingDataRequests.isEmpty())
+                {
+                    getWeek(_pendingDataRequests.get(0));
+                }
             }
         });
     }
@@ -225,7 +239,7 @@ public class StineService
             {
                 try
                 {
-                    Date date = STINE_DAY_FORMAT.parse(dayString);
+                    Date date = parseStineDate(dayString);
                     calendar.setTime(date);
                     System.out.println("date parsed: " + dayString);
                 } catch (ParseException e)

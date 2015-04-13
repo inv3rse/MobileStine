@@ -14,18 +14,28 @@ public class StineServiceTest extends TestCase
 
     public void testTimeParse()
     {
-        String dayString = "Fr, 10. Apr. 2015";
-        boolean parsed = false;
+        String dayStrings[] = {
+                "Fr, 10. Apr. 2015",
+                "Mo, 11. Mai 2015",
+                "Fr, 15. Mai 2015",
+                "Di, 9. Jun. 2015",
+                "Do, 16. Jul. 2015",
+                "Mi, 12. Nov. 2014"
+        };
 
-        try
+        for (String day : dayStrings)
         {
-            StineService.STINE_DAY_FORMAT.parse(dayString);
-            parsed = true;
-        } catch (ParseException e)
-        {
-            parsed = false;
+            boolean parsed = false;
+            try
+            {
+                StineService.parseStineDate(day);
+                parsed = true;
+            } catch (ParseException e)
+            {
+                parsed = false;
+            }
+
+            assertTrue(parsed);
         }
-
-        assertTrue(parsed);
     }
 }
