@@ -5,6 +5,7 @@ import android.app.DatePickerDialog;
 import android.os.Bundle;
 import android.app.Fragment;
 import android.os.Parcelable;
+import android.support.v4.widget.SwipeRefreshLayout;
 import android.view.LayoutInflater;
 import android.view.Menu;
 import android.view.MenuInflater;
@@ -27,6 +28,7 @@ import java.text.DateFormat;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.Calendar;
+import java.util.Date;
 import java.util.List;
 import java.util.Locale;
 
@@ -38,6 +40,7 @@ public class AppointmentsFragment extends Fragment
     private static final DateFormat dateFormat = new SimpleDateFormat("dd.MM.yyyy", Locale.GERMAN);
 
     private Calendar _selectedDate;
+    private SwipeRefreshLayout _refreshLayout;
     private ListView _listView;
     private List<Appointment> _appointments;
     private Bus _bus;
@@ -109,6 +112,7 @@ public class AppointmentsFragment extends Fragment
 
     private void setUpUi(View searchView)
     {
+        _refreshLayout = (SwipeRefreshLayout) searchView.findViewById(R.id.fragment_appointments);
         _listView = (ListView) searchView.findViewById(R.id.appointments_list);
 
         if (_appointments != null && !_appointments.isEmpty())
@@ -116,16 +120,30 @@ public class AppointmentsFragment extends Fragment
             AppointmentAdapter adapter = new AppointmentAdapter(getActivity(), _appointments);
             _listView.setAdapter(adapter);
         }
+        else
+        {
+            refreshData();
+        }
 
-        Button refreshBtn = (Button) searchView.findViewById(R.id.appointments_refreshBtn);
-        refreshBtn.setOnClickListener(new View.OnClickListener()
+        _refreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener()
         {
             @Override
-            public void onClick(View view)
+            public void onRefresh()
             {
-                _bus.post(new RequestAppointmentsEvent(_selectedDate.getTime(), 7));
+                refreshData();
             }
         });
+    }
+
+    private void refreshData()
+    {
+        loadData(_selectedDate.getTime());
+    }
+
+    private void loadData(Date date)
+    {
+        _refreshLayout.setRefreshing(true);
+        _bus.post(new RequestAppointmentsEvent(date, 7));
     }
 
     @Override
@@ -134,6 +152,7 @@ public class AppointmentsFragment extends Fragment
         inflater.inflate(R.menu.appointments, menu);
     }
 
+    @Override
     public boolean onOptionsItemSelected(MenuItem item)
     {
         int id = item.getItemId();
@@ -149,7 +168,7 @@ public class AppointmentsFragment extends Fragment
                     _selectedDate.set(Calendar.MONTH, month);
                     _selectedDate.set(Calendar.DAY_OF_MONTH, day);
 
-                    _bus.post(new RequestAppointmentsEvent(_selectedDate.getTime(), 7));
+                    refreshData();
                 }
             },
                     _selectedDate.get(Calendar.YEAR),
@@ -169,5 +188,6 @@ public class AppointmentsFragment extends Fragment
         _appointments = event.appointments();
         AppointmentAdapter adapter = new AppointmentAdapter(getActivity(), event.appointments());
         _listView.setAdapter(adapter);
+        _refreshLayout.setRefreshing(false);
     }
 }

@@ -1,28 +1,22 @@
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<android.support.v4.widget.SwipeRefreshLayout xmlns:android="http://schemas.android.com/apk/res/android"
              xmlns:tools="http://schemas.android.com/tools"
              android:id="@+id/fragment_appointments"
              android:layout_width="match_parent"
              android:layout_height="match_parent"
              android:orientation="vertical"
-             tools:context="com.inv3rs3.mobilestine.ui.AppointmentsFragment"
-             android:weightSum="1">
+             tools:context="com.inv3rs3.mobilestine.ui.AppointmentsFragment">
 
 
     <ListView
         android:id="@+id/appointments_list"
         android:layout_width="match_parent"
-        android:layout_height="0dp"
-        android:layout_weight="1"
+        android:layout_height="match_parent"
         android:layout_gravity="center_horizontal"
         android:divider="@android:color/transparent"
         android:dividerHeight="8dp"
+        android:paddingLeft="4dp"
+        android:paddingRight="4dp"
+        android:paddingTop="4dp"
         />
 
-    <Button
-        android:id="@+id/appointments_refreshBtn"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="@string/refresh"
-        android:layout_gravity="bottom|center"/>
-
-</LinearLayout>
+</android.support.v4.widget.SwipeRefreshLayout>

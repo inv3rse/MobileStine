@@ -13,7 +13,8 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="4dp"
-        style="@style/AppTheme"/>
+        style="@style/AppTheme"
+        android:textColor="@android:color/white"/>
 
     <EditText
         android:id="@+id/password"
@@ -25,5 +26,6 @@
         android:layout_marginLeft="4dp"
         android:layout_marginRight="4dp"
         android:layout_marginBottom="16dp"
-        style="@style/AppTheme"/>
+        style="@style/AppTheme"
+        android:textColor="@android:color/white"/>
 </LinearLayout>
