@@ -1,4 +1,5 @@
 <resources>
+    <string name="stine_account_label">Stine</string>
     <string name="app_name">MobileStine</string>
     <string name="drawer_open">Menu opened</string>
     <string name="drawer_close">Menu closed</string>
@@ -9,4 +10,7 @@
     <string name="signin">Sign in</string>
     <string name="cancel">Cancel</string>
     <string name="date">Date</string>
+    <string name="title_activity_stine_authenticator">StineAuthenticatorActivity</string>
+
+    <string name="hello_world">Hello world!</string>
 </resources>

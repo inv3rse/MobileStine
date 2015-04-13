@@ -1,0 +1,5 @@
+<account-authenticator xmlns:android="http://schemas.android.com/apk/res/android"
+                       android:accountType="typeOfAuthenticator"
+                       android:icon="@mipmap/ic_launcher"
+                       android:label="@string/stine_account_label"
+    />
