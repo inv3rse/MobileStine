@@ -13,4 +13,12 @@
     <string name="title_activity_stine_authenticator">StineAuthenticatorActivity</string>
 
     <string name="hello_world">Hello world!</string>
+    <string name="msg_loggingIn">logging in</string>
+    <string name="msg_networkError">Network error</string>
+    <string name="msg_loginFailed">login failed</string>
+    <string name="msg_loginSuccess">successfully logged in</string>
+    <string name="account_type_mobilestine">mobilestine.uni-hamburg</string>
+    <string name="dialog_select">Select</string>
+    <string name="dialog_select_account">Select account</string>
+    <string name="account_picker_add_account">add account</string>
 </resources>

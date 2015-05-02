@@ -24,7 +24,6 @@ import android.support.v7.widget.Toolbar;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.ImageView;
 import android.widget.TextView;
 
 import com.inv3rs3.mobilestine.R;
@@ -128,7 +127,7 @@ public class NavigationDrawerFragment extends Fragment implements NavigationDraw
 
     public List<NavigationItem> getMenu()
     {
-        List<NavigationItem> items = new ArrayList<NavigationItem>();
+        List<NavigationItem> items = new ArrayList<>();
         items.add(new NavigationItem("item 1", getResources().getDrawable(R.drawable.ic_menu_check)));
         items.add(new NavigationItem("item 2", getResources().getDrawable(R.drawable.ic_menu_check)));
         items.add(new NavigationItem("item 3", getResources().getDrawable(R.drawable.ic_menu_check)));
@@ -255,11 +254,11 @@ public class NavigationDrawerFragment extends Fragment implements NavigationDraw
         mActionBarDrawerToggle.onConfigurationChanged(newConfig);
     }
 
-    public void setUserData(String user, String email, Bitmap avatar)
+    public void setUserData(String user)
     {
-        ImageView avatarContainer = (ImageView) mFragmentContainerView.findViewById(R.id.imgAvatar);
-        ((TextView) mFragmentContainerView.findViewById(R.id.txtUserEmail)).setText(email);
         ((TextView) mFragmentContainerView.findViewById(R.id.txtUsername)).setText(user);
+//        ImageView avatarContainer = (ImageView) mFragmentContainerView.findViewById(R.id.imgAvatar);
+//        ((TextView) mFragmentContainerView.findViewById(R.id.txtUserEmail)).setText(email);
 //        avatarContainer.setImageDrawable(new RoundImage(avatar));
     }
 

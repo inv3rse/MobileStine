@@ -3,6 +3,10 @@
     package="com.inv3rs3.mobilestine" >
 
     <uses-permission android:name="android.permission.INTERNET" />
+    <uses-permission android:name="android.permission.AUTHENTICATE_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.GET_ACCOUNTS"/>
+    <uses-permission android:name="android.permission.USE_CREDENTIALS"/>
+    <uses-permission android:name="android.permission.MANAGE_ACCOUNTS"/>
 
     <application
         android:name=".application.MobileStineApplication"
@@ -32,7 +36,8 @@
 
         <activity
             android:name=".ui.StineAuthenticatorActivity"
-            android:label="@string/title_activity_stine_authenticator" >
+            android:label="@string/title_activity_stine_authenticator"
+            android:theme="@style/Base.Theme.AppCompat.Light.DarkActionBar">
         </activity>
     </application>
 
