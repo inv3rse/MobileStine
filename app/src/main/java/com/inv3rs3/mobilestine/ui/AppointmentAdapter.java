@@ -19,7 +19,7 @@ import java.util.GregorianCalendar;
 import java.util.List;
 import java.util.Locale;
 
-public class AppointmentAdapter extends ArrayAdapter<Appointment>
+class AppointmentAdapter extends ArrayAdapter<Appointment>
 {
     private static final DateFormat HOUR_FORMAT = new SimpleDateFormat("HH:mm", Locale.GERMAN);
     private static final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE d. LLL. yyyy", Locale.GERMAN);

@@ -9,6 +9,7 @@ import android.accounts.OperationCanceledException;
 import android.app.Fragment;
 import android.app.FragmentManager;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.support.v4.widget.DrawerLayout;
 import android.support.v7.app.AppCompatActivity;
@@ -56,17 +57,19 @@ public class MainActivity extends AppCompatActivity
         _currentUser = null;
         _accountSelectionActive = false;
 
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        String userName = preferences.getString(KEY_CURRENT_USER, null);
+
+        if (userName != null)
+        {
+            _navigationDrawerFragment.setUserData(userName);
+            _currentUser = new Account(userName, getString(R.string.account_type_mobilestine));
+        }
+
         if (savedInstanceState != null)
         {
             _currentFragment = savedInstanceState.getInt(KEY_SELECTED_FRAGMENT);
             _accountSelectionActive = savedInstanceState.getBoolean(KEY_ACCOUNT_SELECTION_ACTIVE);
-            String username = savedInstanceState.getString(KEY_CURRENT_USER);
-
-            if (username != null)
-            {
-                _navigationDrawerFragment.setUserData(username);
-                _currentUser = new Account(username, getString(R.string.account_type_mobilestine));
-            }
         }
         else
         {
@@ -111,6 +114,15 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
+    public void onHeaderClicked()
+    {
+        AccountManager accountManager = AccountManager.get(this);
+        Account[] accounts = accountManager.getAccountsByType(getString(R.string.account_type_mobilestine));
+
+        selectAccount(accounts);
+    }
+
+    @Override
     public void onBackPressed()
     {
         if (_navigationDrawerFragment.isDrawerOpen())
@@ -150,15 +162,17 @@ public class MainActivity extends AppCompatActivity
         return super.onOptionsItemSelected(item);
     }
 
-    @Override
-    protected void onActivityResult(final int requestCode, final int resultCode, final Intent data)
+    private void setAccount(Account account)
     {
-        if (requestCode == 1337 && resultCode == RESULT_OK)
-        {
-            String accountName = data.getStringExtra(AccountManager.KEY_ACCOUNT_NAME);
-            _navigationDrawerFragment.setUserData(accountName);
-            System.out.println(accountName);
-        }
+        _currentUser = account;
+        SharedPreferences preferences = getPreferences(MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+
+        editor.putString(KEY_CURRENT_USER, account.name);
+        editor.apply();
+
+        _navigationDrawerFragment.setUserData(account.name);
+        getAuthToken();
     }
 
     private void getAccount()
@@ -177,8 +191,7 @@ public class MainActivity extends AppCompatActivity
         }
         else if (accounts.length == 1)
         {
-            _currentUser = accounts[0];
-            _navigationDrawerFragment.setUserData(_currentUser.name);
+            setAccount(accounts[0]);
         }
         else
         {
@@ -202,8 +215,7 @@ public class MainActivity extends AppCompatActivity
                     String username = result.getString(AccountManager.KEY_ACCOUNT_NAME);
                     String accountType = result.getString(AccountManager.KEY_ACCOUNT_TYPE);
 
-                    _currentUser = new Account(username, accountType);
-                    _navigationDrawerFragment.setUserData(username);
+                    setAccount(new Account(username, accountType));
                 } catch (OperationCanceledException | IOException | AuthenticatorException e)
                 {
                     e.printStackTrace();
@@ -249,13 +261,7 @@ public class MainActivity extends AppCompatActivity
                     _bus.post(new SetTokenEvent(token));
 
                     System.out.println("got auth token " + token.session());
-                } catch (OperationCanceledException e)
-                {
-                    e.printStackTrace();
-                } catch (IOException e)
-                {
-                    e.printStackTrace();
-                } catch (AuthenticatorException e)
+                } catch (OperationCanceledException | IOException | AuthenticatorException e)
                 {
                     e.printStackTrace();
                 }
@@ -316,8 +322,7 @@ public class MainActivity extends AppCompatActivity
         else
         {
             _accountSelectionActive = false;
-            _currentUser = new Account(selected, getString(R.string.account_type_mobilestine));
-            _navigationDrawerFragment.setUserData(selected);
+            setAccount(new Account(selected, getString(R.string.account_type_mobilestine)));
         }
     }
 

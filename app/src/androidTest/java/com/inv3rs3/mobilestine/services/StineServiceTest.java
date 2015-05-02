@@ -25,7 +25,7 @@ public class StineServiceTest extends TestCase
 
         for (String day : dayStrings)
         {
-            boolean parsed = false;
+            boolean parsed;
             try
             {
                 StineService.parseStineDate(day);
